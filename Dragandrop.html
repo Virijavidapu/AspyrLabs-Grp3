@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Upload via Drag and Drop</title>
+    <style>
+        .upload-area {
+            width: 100%;
+            max-width: 400px;
+            height: 200px;
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            margin: 20px auto;
+            color: #007bff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .upload-area.hover {
+            background-color: #f0f0f0;
+        }
+        .file-info {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="upload-area" id="upload-area">
+    Drag & Drop CSV file here or Click to Upload
+</div>
+
+<div class="file-info" id="file-info"></div>
+
+<input type="file" id="file-input" accept=".csv" style="display: none;">
+
+<script>
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+    const fileInfo = document.getElementById('file-info');
+
+    // Handle drag over event
+    uploadArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        uploadArea.classList.add('hover');
+    });
+
+    // Handle drag leave event
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('hover');
+    });
+
+    // Handle file drop
+    uploadArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        uploadArea.classList.remove('hover');
+        const file = event.dataTransfer.files[0];
+        handleFile(file);
+    });
+
+    // Handle click to upload
+    uploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Handle file selection
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        handleFile(file);
+    });
+
+    // Handle file upload
+    function handleFile(file) {
+        if (file && file.type === 'text/csv') {
+            uploadFile(file);
+        } else {
+            fileInfo.textContent = 'Please upload a valid CSV file.';
+        }
+    }
+
+    // Upload the file to the Flask backend
+    function uploadFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch('http://localhost:5000/upload', {  // Update with your Flask backend URL
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                fileInfo.textContent = `File uploaded successfully: ${data.filename}`;
+            } else {
+                fileInfo.textContent = `Upload failed: ${data.message}`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            fileInfo.textContent = 'An error occurred during the upload.';
+        });
+    }
+</script>
+
+</body>
+</html>
